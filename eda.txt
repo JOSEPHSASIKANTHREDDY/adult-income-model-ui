@@ -1,0 +1,12 @@
+The Dataset has 32561 records with 15 attributes.Out of which 6 are numerical attributes and 9 are categorical.
+Income column is the dependent categorical column with two classes <=50K and >50K.
+Attributes workclass,occupation,native.country are having the NaN values.So,using the KNNImputer method the missing values have been filled.
+Around 76% of Income belong to the class "<=50K" and rest 24% are ">50K" class.
+Using the sanky chart of "Gender vs Income" we see that almost 50% of class "<=50K" are Male.89% of female belong to the class "<=50K"
+which show huge wage gap.
+Private Sector has highest salaries as 60% of the class ">50K" belong to it.As ususal the salaries are direclty related to the Education level
+and the Workclass of the individual.
+Interesting fact is that around 90% of the class ">50K" are White people which shows that there is racial partiality in the cases.
+Box plots of capital.gain and capital.loss are may potray a lot of outliers but it is due to most of the non-outliers are zeros.
+
+For the Chi-square test all the variables do not fit to the expected values as the p-values are almost 0.0 and huge test-statistics.
