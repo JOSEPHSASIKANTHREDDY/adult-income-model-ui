@@ -9,4 +9,13 @@ and the Workclass of the individual.
 Interesting fact is that around 90% of the class ">50K" are White people which shows that there is racial partiality in the cases.
 Box plots of capital.gain and capital.loss are may potray a lot of outliers but it is due to most of the non-outliers are zeros.
 
-For the Chi-square test all the variables do not fit to the expected values as the p-values are almost 0.0 and huge test-statistics.
+For the Chi-Square test of Independence all the variables do not fit to the expected values as the p-values are almost 0.0 and huge test-statistics.
+For the Chi-Square contingency test only income vs workclass are showing no relation and rest all the attributes show some effect 
+with p-value being less that 0.05
+
+
+cm
+perf
+cutoff
+lift
+feat

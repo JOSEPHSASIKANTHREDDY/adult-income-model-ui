@@ -23,9 +23,9 @@ def load_pickle():
     return pickle.load(open("EDA.pickle", 'rb'))
 
 
-@st.cache(allow_output_mutation=True)
+@st.cache(allow_output_mutation=True,persist=True)
 def load_data():
-    return pd.read_csv("adult.csv", na_values='?')
+    return pd.read_csv("Update_adult.csv", na_values='?'),pd.read_csv("model_performance_df.csv"),pd.read_csv("lift_table.csv"),pd.read_csv('cutoffdata.csv')
 
 
 @st.cache(allow_output_mutation=True)
@@ -46,7 +46,7 @@ def plot_prob_cutof(cutof_df, data_type, metric):
     return(fig)
 
 
-@st.cache(allow_output_mutation=True)
+@st.cache(allow_output_mutation=True,persist=True)
 def plot_feat_imp(data, imp_type):
     df = data[['Features', imp_type]].sort_values(by=imp_type)
     fig = go.Figure(data=[
@@ -63,14 +63,15 @@ def plot_feat_imp(data, imp_type):
 EDA_Pickle = pickle.load(open("EDA.pickle", 'rb'))
 models = pickle.load(open("model_output.pickle", "rb"))
 lg = pickle.load(open("lg.pkl", "rb"))
-model_performance=pd.read_csv("model_performance_df.csv")
-lift_talbe=pd.read_csv("lift_table.csv")
+# model_performance=pd.read_csv("model_performance_df.csv")
+# lift_talbe=pd.read_csv("lift_table.csv")
+# df_cutoff = pd.read_csv('cutoffdata.csv')
 
 algorithms = ["Logistic", "DecisionTree", "RandomForest", "XGBoost", "LightGBM"]
 
 # Data
 # df = pd.read_csv("adult.csv",na_values='?')
-df = pd.read_csv("Update_adult.csv", na_values='?')
+df,model_performance,lift_talbe,df_cutoff = load_data()
 cat_cols = df.select_dtypes(exclude=np.number).columns
 num_cols = df.select_dtypes(include=np.number).columns
 
@@ -81,7 +82,7 @@ st.sidebar.header("**Walkthrough**")
 # viz = st.sidebar.button("Visualization")
 
 flow = st.sidebar.selectbox(
-    "", ['Overview', "Data", "EDA", "Statistical Tests", "Metrics"])
+    "", ['Overview', "Data", "EDA", "Statistical Tests", "Model","Conclusion"])
 
 # Main Area
 
@@ -95,7 +96,7 @@ if flow == 'Overview':
     c1.markdown("## **Team 1**")
     c2.markdown("""
                     *  **Ram Singh**
-                    * **H C Karthic Sampathkumar**
+                    * **Karthic Sampathkumar**
                     * **Amit Kumar**
                     * **Sri Karan**
                     * **Joseph Byreddy**
@@ -108,7 +109,7 @@ if flow == 'Data':
     st.header("Dataset")
     # st.write("""
     # **Rows:** """ + str(df.shape[0])+""" **Attributes:** """+str(df.shape[1]))
-    st.dataframe(df)
+    st.dataframe(df.head(10))
     st.write("**Source of the data is UCI Machine Learning Repository, and it has 32,561 different observation representing \
     each individual along with 14 features for different nations. The 14 features consist of 8 nominal,1 ordinal and 5 continuous attributes.**")
 
@@ -118,9 +119,11 @@ if flow == 'EDA':
     eda = st.beta_expander("EDA")
     c1, c2 = eda.beta_columns((1, 1))
     c1.header("Info")
-    c1.dataframe(EDA_Pickle['df_head'], height=225)
+    eda_dt=EDA_Pickle['df_head']
+    eda_dt['Missing %'] =eda_dt['Missing %'].apply(lambda x: str(round(x,2))+'%')
+    c1.dataframe(eda_dt, height=225)
     c2.header("Describe")
-    c2.dataframe(EDA_Pickle['df_summary'], height=225)
+    c2.dataframe(EDA_Pickle['df_summary'].astype(int), height=225)
     vizs = st.beta_expander("Visualization")
 
     c1, c2, c3, c4, c5, c6, c7, c8 = vizs.beta_columns((8))
@@ -195,7 +198,7 @@ if flow == 'Statistical Tests':
     fig = go.Figure(data=plotly_data, layout=layout)
     chi_square.plotly_chart(fig, use_container_width=True)
 
-    chi_square.dataframe(values_data)
+    # chi_square.dataframe(values_data)
     test_statistic_indep, p_val_indep = stats.chisquare(values_data)
     chi_square.write("chi-squared test statistic is **"+str(round(test_statistic_indep, 2)
                                                             )+"** and p-values is **"+str(round(p_val_indep, 2))+"**")
@@ -243,12 +246,23 @@ if flow == 'Statistical Tests':
     # f_oneway=st.beta_expander("Oneway Anova")
     # two_oneway=st.beta_expander("Twoway Anova")
 
-if flow == "Metrics":
+if flow == "Model":
 
-    df_cutoff = pd.read_csv('cutoffdata.csv')
-    cutoff_expander = st.beta_expander("Cutoff Chart")
+
+    ## Confusion Matrix
+    confusion_matrix_expander = st.beta_expander("Confusion Matrix")
+    c1,c2=confusion_matrix_expander.beta_columns(2)
+    alg_cnf = c1.selectbox("Algorithm", algorithms,key="Confusion Matrix Algorithms")
+    data_type = c2.selectbox("Data", ['Train','Test'])
+    confusion_matrix_expander.plotly_chart(models['confussion_matrix_plot'].get(alg_cnf+"_"+data_type.lower()))
+
+    ## Performance
+    performance_expander = st.beta_expander("Performance")  
+    performance_expander.dataframe(model_performance)
+
+    ## Probability Cutoff
+    cutoff_expander = st.beta_expander("Probability Cutoff")
     algs = df_cutoff['Algorithm'].unique().tolist()
-    # st.write(algs)
     c1, c2, c3 = cutoff_expander.beta_columns(3)
     alg = c1.multiselect("Algorithm", algs, algs)
     dt = c2.selectbox("Data Type", ["Train", "Test"])
@@ -258,8 +272,13 @@ if flow == "Metrics":
     cutoff_expander.plotly_chart(plot_prob_cutof(
         formatted_data, dt, met), use_container_width=True)
 
-    feat_imp = st.beta_expander("Feature Importances")
-    # feat_imp.dataframe(lg.coef_)
+    ## Lift Table
+    lift_table_expander = st.beta_expander("Lift Table")  
+    alg_lift_table=lift_table_expander.selectbox("Algorithm",algorithms,key="Lift Table Algorithms")
+    lift_table_expander.dataframe(lift_talbe[lift_talbe['algo']==alg_lift_table])
+
+    ## Feature Importance
+    feat_imp = st.beta_expander("Feature Importance")
     alg_dict = {'XGBoost': "xgb_feature_imp_df",
                 'RandomForest': "rf_feature_imp_df",
                 'LightGBM': "lgb_feature_imp_df",
@@ -280,17 +299,5 @@ if flow == "Metrics":
     feat_imp.plotly_chart(plot_feat_imp(
         data=models[alg_dict[select_alg]], imp_type=imp_type))
 
-    confusion_matrix_expander = st.beta_expander("Confusion Matrix")
-    c1,c2=confusion_matrix_expander.beta_columns(2)
-    alg_cnf = c1.selectbox("Algorithm", algorithms,key="Confusion Matrix Algorithms")
-    data_type = c2.selectbox("Data", ['Train','Test'])
-
-    confusion_matrix_expander.plotly_chart(models['confussion_matrix_plot'].get(alg_cnf+"_"+data_type.lower()))
-
-    performance_expander = st.beta_expander("Performance")  
-    performance_expander.dataframe(model_performance)
-
-    lift_table_expander = st.beta_expander("Lift Table")  
-    alg_lift_table=lift_table_expander.selectbox("Algorithm",algorithms,key="Lift Table Algorithms")
-    lift_table_expander.dataframe(lift_talbe[lift_talbe['algo']==alg_lift_table])
-
+if flow=="Conclusion":
+    st.write("Conclusion")
