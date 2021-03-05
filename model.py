@@ -8,6 +8,7 @@ import plotly.express as px
 import plotly.graph_objs as go
 import plotly.figure_factory as ff
 import scipy.stats as stats
+import sklearn
 import random
 import pickle
 import math
