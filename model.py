@@ -23,9 +23,9 @@ def load_pickle():
     return pickle.load(open("EDA.pickle", 'rb'))
 
 
-@st.cache(allow_output_mutation=True,persist=True)
+@st.cache(allow_output_mutation=True, persist=True)
 def load_data():
-    return pd.read_csv("Update_adult.csv", na_values='?'),pd.read_csv("model_performance_df.csv"),pd.read_csv("lift_table.csv"),pd.read_csv('cutoffdata.csv')
+    return pd.read_csv("Update_adult.csv", na_values='?'), pd.read_csv("model_performance_df.csv"), pd.read_csv("lift_table.csv"), pd.read_csv('cutoffdata.csv')
 
 
 @st.cache(allow_output_mutation=True)
@@ -46,7 +46,7 @@ def plot_prob_cutof(cutof_df, data_type, metric):
     return(fig)
 
 
-@st.cache(allow_output_mutation=True,persist=True)
+@st.cache(allow_output_mutation=True, persist=True)
 def plot_feat_imp(data, imp_type):
     df = data[['Features', imp_type]].sort_values(by=imp_type)
     fig = go.Figure(data=[
@@ -67,11 +67,12 @@ lg = pickle.load(open("lg.pkl", "rb"))
 # lift_talbe=pd.read_csv("lift_table.csv")
 # df_cutoff = pd.read_csv('cutoffdata.csv')
 
-algorithms = ["Logistic", "DecisionTree", "RandomForest", "XGBoost", "LightGBM"]
+algorithms = ["Logistic", "DecisionTree",
+              "RandomForest", "XGBoost", "LightGBM"]
 
 # Data
 # df = pd.read_csv("adult.csv",na_values='?')
-df,model_performance,lift_talbe,df_cutoff = load_data()
+df, model_performance, lift_talbe, df_cutoff = load_data()
 cat_cols = df.select_dtypes(exclude=np.number).columns
 num_cols = df.select_dtypes(include=np.number).columns
 
@@ -82,17 +83,17 @@ st.sidebar.header("**Walkthrough**")
 # viz = st.sidebar.button("Visualization")
 
 flow = st.sidebar.selectbox(
-    "", ['Overview', "Data", "EDA", "Statistical Tests", "Model","Conclusion"])
+    "", ['Overview', "Data", "EDA", "Statistical Tests", "Model", "Conclusion"])
 
 # Main Area
 
 if flow == 'Overview':
     st.header("Overview")
     st.image(
-        "main.gif",height=200)
+        "main.gif", height=200)
     # st.write('<div style="text-align: right"> your-text-here </div>')
     # components.html('<div style="text-align: right"> <b>Team 1</b> </div>')
-    c1,c2=st.beta_columns(2)
+    c1, c2 = st.beta_columns(2)
     c1.markdown("## **Team 1**")
     c2.markdown("""
                     *  **Ram Singh**
@@ -119,8 +120,9 @@ if flow == 'EDA':
     eda = st.beta_expander("EDA")
     c1, c2 = eda.beta_columns((1, 1))
     c1.header("Info")
-    eda_dt=EDA_Pickle['df_head']
-    eda_dt['Missing %'] =eda_dt['Missing %'].apply(lambda x: str(round(x,2)*100)+'%')
+    eda_dt = EDA_Pickle['df_head']
+    eda_dt['Missing %'] = eda_dt['Missing %'].apply(
+        lambda x: str(round(x, 2)*100)+'%')
     c1.dataframe(eda_dt, height=225)
     c2.header("Describe")
     c2.dataframe(EDA_Pickle['df_summary'].astype(int), height=225)
@@ -248,19 +250,20 @@ if flow == 'Statistical Tests':
 
 if flow == "Model":
 
-
-    ## Confusion Matrix
+    # Confusion Matrix
     confusion_matrix_expander = st.beta_expander("Confusion Matrix")
-    c1,c2=confusion_matrix_expander.beta_columns(2)
-    alg_cnf = c1.selectbox("Algorithm", algorithms,key="Confusion Matrix Algorithms")
-    data_type = c2.selectbox("Data", ['Train','Test'])
-    confusion_matrix_expander.plotly_chart(models['confussion_matrix_plot'].get(alg_cnf+"_"+data_type.lower()))
+    c1, c2 = confusion_matrix_expander.beta_columns(2)
+    alg_cnf = c1.selectbox("Algorithm", algorithms,
+                           key="Confusion Matrix Algorithms")
+    data_type = c2.selectbox("Data", ['Train', 'Test'])
+    confusion_matrix_expander.plotly_chart(
+        models['confussion_matrix_plot'].get(alg_cnf+"_"+data_type.lower()))
 
-    ## Performance
-    performance_expander = st.beta_expander("Performance")  
+    # Performance
+    performance_expander = st.beta_expander("Performance")
     performance_expander.dataframe(model_performance)
 
-    ## Probability Cutoff
+    # Probability Cutoff
     cutoff_expander = st.beta_expander("Probability Cutoff")
     algs = df_cutoff['Algorithm'].unique().tolist()
     c1, c2, c3 = cutoff_expander.beta_columns(3)
@@ -272,12 +275,14 @@ if flow == "Model":
     cutoff_expander.plotly_chart(plot_prob_cutof(
         formatted_data, dt, met), use_container_width=True)
 
-    ## Lift Table
-    lift_table_expander = st.beta_expander("Lift Table")  
-    alg_lift_table=lift_table_expander.selectbox("Algorithm",algorithms,key="Lift Table Algorithms")
-    lift_table_expander.dataframe(lift_talbe[lift_talbe['algo']==alg_lift_table])
+    # Lift Table
+    lift_table_expander = st.beta_expander("Lift Table")
+    alg_lift_table = lift_table_expander.selectbox(
+        "Algorithm", algorithms, key="Lift Table Algorithms")
+    lift_table_expander.dataframe(
+        lift_talbe[lift_talbe['algo'] == alg_lift_table])
 
-    ## Feature Importance
+    # Feature Importance
     feat_imp = st.beta_expander("Feature Importance")
     alg_dict = {'XGBoost': "xgb_feature_imp_df",
                 'RandomForest': "rf_feature_imp_df",
@@ -299,5 +304,6 @@ if flow == "Model":
     feat_imp.plotly_chart(plot_feat_imp(
         data=models[alg_dict[select_alg]], imp_type=imp_type))
 
-if flow=="Conclusion":
-    st.write("Conclusion")
+if flow == "Conclusion":
+    st.markdown("""We observe that entire process requires good amount of research to find best and optimal solution which can enable us to predict better accuracy. Also there seems scope to improve the performance of the model by doing feature engineering as well as by adding new features such as family and social identity of people. \
+    \n We found issue with feature importance among all algorithms, all algorithms are giving different messages which is extremely hard to make decision. Also there are one or more than one feature in the data which is clearly separating target  variable.""")
