@@ -120,7 +120,7 @@ if flow == 'EDA':
     c1, c2 = eda.beta_columns((1, 1))
     c1.header("Info")
     eda_dt=EDA_Pickle['df_head']
-    eda_dt['Missing %'] =eda_dt['Missing %'].apply(lambda x: str(round(x,2))+'%')
+    eda_dt['Missing %'] =eda_dt['Missing %'].apply(lambda x: str(round(x,2)*100)+'%')
     c1.dataframe(eda_dt, height=225)
     c2.header("Describe")
     c2.dataframe(EDA_Pickle['df_summary'].astype(int), height=225)
